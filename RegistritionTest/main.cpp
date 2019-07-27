@@ -74,9 +74,25 @@ int main()
 	time.tic();
 
 	pcl::IterativeClosestPoint<PointT, PointT> icp;
+	icp.setMaximumIterations(60);
 	icp.setInputSource(cloud_icp);
 	icp.setInputTarget(cloud_in);
-	icp.setMaximumIterations(iterationCount);
+	icp.align(*cloud_icp);
+	icp.setMaximumIterations(1);
+	std::cout << "Applied " << iterationCount << " ICP iteration(s) in " << time.toc() << " ms" << std::endl;
+
+	if (icp.hasConverged())
+	{
+		std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
+		std::cout << "\nICP transformation " << iterationCount << " : cloud_icp -> cloud_in" << std::endl;
+		transformation_matrix = icp.getFinalTransformation().cast<double>();
+		print4x4Matrix(transformation_matrix);
+	}
+	else
+	{
+		PCL_ERROR("\nICP has not converged.\n");
+		return (-1);
+	}
 
 	pcl::visualization::PCLVisualizer viewer("ICP demo");
 	int v1(0);
@@ -124,6 +140,7 @@ int main()
 			time.tic();
 
 			icp.align(*cloud_icp);
+			//icp.setMaximumIterations(iterationCount);
 
 			std::cout << "Applied " << iterationCount 
 				<< " ICP iteration(s) in " << time.toc() << " ms" 
